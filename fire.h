@@ -13,6 +13,7 @@
 template<typename E>
 class Fire {
 public:
+	Fire() {}
 	Fire( int N, E *energy );
 
 	void initialize( const std::vector<double>&);
