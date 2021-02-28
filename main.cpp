@@ -1,5 +1,5 @@
 
-#include "fire.h"
+#include "fire2.h"
 
 #include <iostream>
 #include <fstream>
@@ -54,7 +54,7 @@ int main()
 	vector<double> x(2);
 	x[0] = 1;
 	x[1] = 1;
-	fire.minimize(x);
+	fire.minimizeVV(x);
 
 	cout << fire.x[0] << endl << fire.x[1] << endl;
 	cout << fire.Fnorm << endl;

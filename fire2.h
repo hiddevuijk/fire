@@ -1,5 +1,5 @@
-#ifndef GUARD_FIRE_H
-#define GUARD_FIRE_H
+#ifndef GUARD_FIRE2_H
+#define GUARD_FIRE2_H
 
 #include <iostream>
 #include <vector>
@@ -17,14 +17,15 @@ public:
 	Fire( int N, E *energy );
 
 	void initialize( const std::vector<double>&);
+
 	void minimizeVV( const std::vector<double>&);
-	void minimizeVV2( const std::vector<double>&);
 	void minimizeEE( const std::vector<double>&);
 	void minimizeSIE( const std::vector<double>&);
+
 	void make_VV_step(); 
-	void make_VV2_step(); 
 	void make_EE_step(); 
 	void make_SIE_step(); 
+
 	void make_FIRE_step();
 
 	int N; // number of variables
@@ -49,6 +50,7 @@ public:
 	double alpha;
 	double dt;
 	double NPneg;
+	double NPpos;
 	double Fnorm;
 
 };
@@ -83,25 +85,12 @@ void Fire<E>::initialize( const std::vector<double>& xInit)
 	std::fill(v.begin(), v.end(), 0.0);
 	dt = dt0;
 	alpha = alpha0;
-	NPneg = 0;
+	NPneg = -1;
+	NPpos = 0;
 }
 
 template<typename E>
 void Fire<E>::minimizeVV( const std::vector<double>& xInit)
-{
-	initialize(xInit);
-
-	int it  =0 ;
-	do {
-		make_FIRE_step();
-		make_VV_step();
-		it++;
-	} while(Fnorm > error );
-	std::cout << "\t\t" << it << std::endl;
-}
-
-template<typename E>
-void Fire<E>::minimizeVV2( const std::vector<double>& xInit)
 {
 	initialize(xInit);
 
@@ -125,7 +114,7 @@ void Fire<E>::minimizeEE( const std::vector<double>& xInit)
 		make_EE_step();
 		it++;
 	} while(Fnorm > error );
-	std::cout << "\t\t" << it << std::endl;
+	//std::cout << "\t\t" << it << std::endl;
 }
 
 template<typename E>
@@ -139,7 +128,7 @@ void Fire<E>::minimizeSIE( const std::vector<double>& xInit)
 		make_EE_step();
 		it++;
 	} while(Fnorm > error );
-	std::cout << "\t\t" << it << std::endl;
+	//std::cout << "\t\t" << it << std::endl;
 }
 
 
@@ -147,67 +136,48 @@ void Fire<E>::minimizeSIE( const std::vector<double>& xInit)
 template<typename E>
 void Fire<E>::make_VV_step()
 {
-	// assumes F(t) is correct
-
-	// set x(t+dt)
-	for(int i=0; i<N; ++i) {
-		x[i] += v[i]*dt + 0.5*F[i]*dt*dt/m;
+	double Fnorm = 0;
+	double vnorm = 0;
+	for(int i=0;i<N;++i) {
+		v[i] += 0.5*dt*F[i]/m;
+		Fnorm += F[i]*F[i];
+		vnorm += v[i]*v[i];
 	}
+	Fnorm = std::sqrt(Fnorm);
+	vnorm = std::sqrt(vnorm);
 
-	// set v(t+dt) with F(t)
 	for(int i=0; i<N; ++i) {
-		v[i] += 0.5*F[i]*dt/m;
-	}
-
-
-	// calculate F(t+dt)
-	energy->dE(F,x);
-
-	// set v(t+dt) with F(t+dt)
-	for(int i=0; i<N; ++i) {
-		v[i] += 0.5*F[i]*dt/m;
-	}
-
-}
-
-template<typename E>
-void Fire<E>::make_VV2_step()
-{
-	// assumes F(t) is correct
-
-	// set v(t+dt/2) with F(t)
-	for(int i=0; i<N; ++i) {
-		v[i] += 0.5*F[i]*dt/m;
+		v[i] += -alpha*v[i] + alpha*F[i]*vnorm/Fnorm;
 		x[i] += dt*v[i];
 	}
 
-	// calculate F(t+dt)
 	energy->dE(F,x);
 
-	// set v(t+dt) with F(t+dt)
-	for(int i=0; i<N; ++i) {
-		v[i] += 0.5*F[i]*dt/m;
+	for(int i=0;i<N; ++i) {
+		v[i] += 0.5*dt*F[i]/m;
 	}
-
 }
 
 
 template<typename E>
 void Fire<E>::make_EE_step()
 {
-	// assumes F(t) is correct
-
-	// set x(t+dt)
+	double Fnorm = 0;	
+	double vnorm = 0;	
 	for(int i=0; i<N; ++i) {
-		x[i] += v[i]*dt;
+		Fnorm += F[i]*F[i];
+		vnorm += v[i]*v[i];
 	}
+	Fnorm = std::sqrt(Fnorm);
+	vnorm = std::sqrt(vnorm);
 
-	// calculate F(t+dt)
+	for(int i=0;i<N; ++i) {
+		v[i] += -alpha*v[i] + alpha*F[i]*vnorm/Fnorm;
+		x[i] += dt*v[i];
+	}
 	energy->dE(F,x);
-
-	// set v(t+dt) with F(t+dt)
-	for(int i=0; i<N; ++i) {
-		v[i] += F[i]*dt/m;
+	for(int i=0;i<N; ++i) {
+		v[i] += dt*F[i]/m;	
 	}
 
 }
@@ -216,16 +186,23 @@ void Fire<E>::make_EE_step()
 template<typename E>
 void Fire<E>::make_SIE_step()
 {
-	// assumes F(t) is correct
-
-	// set x(t+dt)
-	for(int i=0; i<N; ++i) {
+	double Fnorm = 0;
+	double vnorm = 0;
+	for(int i=0;i<N; ++i) {
 		v[i] += dt*F[i]/m;
-		x[i] += v[i]*dt;
+		Fnorm += F[i]*F[i];
+		vnorm += v[i]*v[i];
+	}
+	Fnorm = std::sqrt(Fnorm);
+	vnorm = std::sqrt(vnorm);
+
+	for(int i=0; i<N; ++i) {
+		v[i] += -alpha*v[i] + alpha*F[i]*vnorm/Fnorm;
+		x[i] += dt*v[i];
 	}
 
-	// calculate F(t+dt)
 	energy->dE(F,x);
+
 }
 
 
@@ -234,39 +211,36 @@ template<typename E>
 void Fire<E>::make_FIRE_step()
 {
 
-	// step F1
-	Fnorm = 0;
-	double vnorm = 0;
 	double P = 0;	
 	for(int i=0;i<N; ++i) {
-		Fnorm += F[i]*F[i];
-		vnorm += v[i]*v[i];
 		P += v[i]*F[i];
 	}
-	Fnorm = std::sqrt(Fnorm);
-	vnorm = std::sqrt(vnorm);
 
-
-	
-
-	// step F3
-	if( P <= 0 ) {
-		dt *= fdec;
-		alpha = alpha0;
-		// v[i] = 0
-		std::fill( v.begin(), v.end(), 0.);
-		NPneg = 0;
-	} else {
+	if( P > 0 ) {
 		NPneg++;
-		for(int i=0;i<N; ++i) {
-			v[i] = (1-alpha)*v[i] + alpha*F[i]*vnorm/Fnorm;
-		}
 
-		if( NPneg > Nmin ) {
+		if(NPneg > Nmin ) {
 			dt = std::min(dt*finc, dtmax);
 			alpha *= falpha;
 		}
-	} 
+
+	} else {
+		NPneg = 0;
+		NPpos++;
+
+		// line 19 20
+		// line 22 - 25
+		dt *= fdec;
+
+		for(int i=0;i<N; ++i) {
+			x[i] -= 0.5*dt*v[i];
+		}
+
+		std::fill( v.begin(), v.end(), 0.0);
+		dt *= fdec;
+		alpha = alpha0;
+	}
+	
 }
 
 
