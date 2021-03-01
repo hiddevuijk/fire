@@ -97,7 +97,7 @@ void Fire<E>::minimizeVV( const std::vector<double>& xInit)
 		make_VV_step();
 		it++;
 	} while(Fnorm > error );
-	std::cout << "\t\t" << it << std::endl;
+	//std::cout << "\t\t" << it << std::endl;
 }
 
 template<typename E>
@@ -111,7 +111,7 @@ void Fire<E>::minimizeVV2( const std::vector<double>& xInit)
 		make_VV_step();
 		it++;
 	} while(Fnorm > error );
-	std::cout << "\t\t" << it << std::endl;
+	//std::cout << "\t\t" << it << std::endl;
 }
 
 template<typename E>
@@ -125,7 +125,7 @@ void Fire<E>::minimizeEE( const std::vector<double>& xInit)
 		make_EE_step();
 		it++;
 	} while(Fnorm > error );
-	std::cout << "\t\t" << it << std::endl;
+	//std::cout << "\t\t" << it << std::endl;
 }
 
 template<typename E>
@@ -139,7 +139,7 @@ void Fire<E>::minimizeSIE( const std::vector<double>& xInit)
 		make_EE_step();
 		it++;
 	} while(Fnorm > error );
-	std::cout << "\t\t" << it << std::endl;
+	//std::cout << "\t\t" << it << std::endl;
 }
 
 
