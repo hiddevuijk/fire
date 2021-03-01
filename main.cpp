@@ -1,5 +1,5 @@
 
-#include "fire.h"
+#include "fire2.h"
 
 #include <iostream>
 #include <fstream>

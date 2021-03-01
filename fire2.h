@@ -100,7 +100,7 @@ void Fire<E>::minimizeVV( const std::vector<double>& xInit)
 	do {
 		make_FIRE_step();
 		make_VV_step();
-        set_Fnorm;
+        set_Fnorm();
 		it++;
 	} while(Fnorm > error );
 	//std::cout << "\t\t" << it << std::endl;
@@ -115,7 +115,7 @@ void Fire<E>::minimizeEE( const std::vector<double>& xInit)
 	do {
 		make_FIRE_step();
 		make_EE_step();
-        set_Fnorm;
+        set_Fnorm();
 		it++;
 	} while(Fnorm > error );
 	//std::cout << "\t\t" << it << std::endl;
@@ -130,7 +130,7 @@ void Fire<E>::minimizeSIE( const std::vector<double>& xInit)
 	do {
 		make_FIRE_step();
 		make_EE_step();
-        set_Fnorm;
+        set_Fnorm();
 		it++;
 	} while(Fnorm > error );
 	//std::cout << "\t\t" << it << std::endl;
