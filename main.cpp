@@ -34,6 +34,7 @@ int main()
 
 	Fire<E> fire(2, &energy);
 	fire.error = 1e-12;
+    fire.dtmin = 0.01;
 
 	vector<double> x(2);
 	x[0] = 1;

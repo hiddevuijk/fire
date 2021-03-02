@@ -38,11 +38,15 @@ public:
 	int Nmin;
 	double finc;
 	double fdec;
+
 	double alpha0;
 	double falpha;
+
 	double m;
 
 	double dtmax;
+    double dtmin;
+
 	double dt0;
 	double error;
 
@@ -71,6 +75,7 @@ Fire<E>::Fire( int N, E *energy )
 	m = 1e-1;
 
 	dtmax = 0.1;
+    dtmin = 0.01;
 	dt0 = 0.03;
 	error = 1e-6;
 
@@ -232,6 +237,7 @@ void Fire<E>::make_FIRE_step()
 		NPneg = 0;
 
 		dt *= fdec;
+        dt = std::max( dt*fdec, dtmin);
 		alpha = alpha0;
 
 		for(int i=0;i<N; ++i) {
