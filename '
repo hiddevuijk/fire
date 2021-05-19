@@ -80,8 +80,10 @@ public:
 	double Fnorm;
     int NF;
     
-	//double deltaU;
-	//double U;
+	double deltaU;
+	double U;
+
+	double dxmax = 1e-3;
 };
 
 template<typename E>
@@ -98,15 +100,16 @@ void Fire<E>::initialize( const std::vector<double>& xInit)
 		
 
 	// calculate F(t)
-	energy->dE(F,x);	
-	//energy->EdE(U,F,x);
-	//deltaU = 0;
+	//energy->dE(F,x);	
+	energy->EdE(U,F,x);
 
 	dt = dt0;
 	alpha = alpha0;
 	NPsince_neg = 0;
 	NPneg = 0;
     NF = 0;
+
+	deltaU = 0;
 }
 
 template<typename E>
@@ -123,6 +126,7 @@ void Fire<E>::minimizeVV( const std::vector<double>& xInit)
         NF++;
 
 	} while(Fnorm > N*error or Fmax() > error_max );
+	//std::cout << "\t\t" << it << std::endl;
 }
 
 template<typename E>
@@ -138,6 +142,7 @@ void Fire<E>::minimizeEE( const std::vector<double>& xInit)
 		it++;
         NF++;
 	} while(Fnorm > N*error or Fmax() > error_max );
+	//std::cout << "\t\t" << it << std::endl;
 }
 
 template<typename E>
@@ -147,12 +152,14 @@ void Fire<E>::minimizeSIE( const std::vector<double>& xInit)
 
 	int it  =0 ;
 	do {
+        //std::cout << it << '\t' <<  dt << std::endl;
 		make_FIRE_step();
 		make_SIE_step();
         set_Fnorm();
 		it++;
         NF++;
 	} while(Fnorm > N*error or Fmax() > error_max );
+    //} while( Fmax() > error );
 }
 
 
@@ -160,6 +167,8 @@ void Fire<E>::minimizeSIE( const std::vector<double>& xInit)
 template<typename E>
 void Fire<E>::make_VV_step()
 {
+
+	dt = std::min( dt, dxmax/vmax() );
 
 	double Fnorm = 0;
 	double vnorm = 0;
@@ -176,10 +185,10 @@ void Fire<E>::make_VV_step()
 		x[i] += dt*v[i];
 	}
 
-	energy->dE(F,x);
-	//deltaU = -1*U;
-	//energy->EdE(U,F,x);
-	//deltaU += U;
+	//energy->dE(F,x);
+	deltaU = -1*U;
+	energy->EdE(U,F,x);
+	deltaU += U;
 
 	for(int i=0;i<N; ++i) {
 		v[i] += 0.5*dt*F[i]/m;
@@ -204,10 +213,10 @@ void Fire<E>::make_EE_step()
 		x[i] += dt*v[i];
 	}
 
-	energy->dE(F,x);
-	//deltaU = -1*U;
-	//energy->EdE(U,F,x);
-	//deltaU += U;
+	//energy->dE(F,x);
+	deltaU = -1*U;
+	energy->EdE(U,F,x);
+	deltaU += U;
 
 	for(int i=0;i<N; ++i) {
 		v[i] += dt*F[i]/m;	
@@ -235,10 +244,10 @@ void Fire<E>::make_SIE_step()
 		x[i] += dt*v[i];
 	}
 
-	energy->dE(F,x);
-	//deltaU = -1*U;
-	//energy->EdE(U,F,x);
-	//deltaU += U;
+	//energy->dE(F,x);
+	deltaU = -1*U;
+	energy->EdE(U,F,x);
+	deltaU += U;
 }
 
 
@@ -251,7 +260,7 @@ void Fire<E>::make_FIRE_step()
 	}
 
 	if(P > 0) {
-	//if( P > 0 or   deltaU < 0) {
+	//if(  deltaU < 0) {
 		NPneg = 0;
 		NPsince_neg++;
 		if(NPsince_neg > Nmin ) {
@@ -262,17 +271,15 @@ void Fire<E>::make_FIRE_step()
 	} else { // P <= 0
 		NPsince_neg = 0;
 		NPneg++;
-		
+
 		for(int i=0;i<N; ++i) {
-			x[i] -= 0.5*dt*v[i];
-			v[i] = 0;
+			x[i] -= 0.05*dt*v[i];
 		}
 
-		//energy->dE(F,x);
-
-		//dt *= fdec;
         dt = std::max( dt*fdec, dtmin);
 		alpha = alpha0;
+
+		std::fill( v.begin(), v.end(), 0.0);
 	}
 
 
